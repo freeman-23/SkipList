@@ -3,7 +3,7 @@
 project ("SkipList")
 
 # Add source to this project's executable.
-add_executable (${PROJECT_NAME}  "SkipList.h" "UnitTest.cpp" "SkipList.hpp"    "t.h")
+add_executable (${PROJECT_NAME}  "SkipList.h" "UnitTest.cpp" "SkipList.hpp"    )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
