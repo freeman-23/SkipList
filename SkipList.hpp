@@ -4,48 +4,57 @@
 #include <random>
 #include <format>
 
-inline skip_list::iterator::iterator()
+
+template <class NodePtr>
+skip_list::Iterator<NodePtr>::Iterator() noexcept
 	: m_ptr(nullptr)
 {
 }
 
-inline skip_list::iterator::iterator(node* ptr)
+template <class NodePtr>
+skip_list::Iterator<NodePtr>::Iterator(NodePtr ptr) noexcept
 	: m_ptr(ptr)
 {
 }
 
-inline skip_list::value_type skip_list::iterator::operator*() const
+template <class NodePtr>
+skip_list::value_type skip_list::Iterator<NodePtr>::operator*() const
 {
 	return m_ptr->get();
 }
 
-inline skip_list::pointer skip_list::iterator::operator->() const
+template <class NodePtr>
+skip_list::pointer skip_list::Iterator<NodePtr>::operator->() const
 {
 	return m_ptr->val;
 }
 
-inline skip_list::iterator& skip_list::iterator::operator++()
+template <class NodePtr>
+skip_list::Iterator<NodePtr>& skip_list::Iterator<NodePtr>::operator++()
 {
 	m_ptr = m_ptr->next;
 	return *this;
 }
 
-inline skip_list::iterator skip_list::iterator::operator++(int)
+template <class NodePtr>
+skip_list::Iterator<NodePtr> skip_list::Iterator<NodePtr>::operator++(int)
 {
-	const iterator tmp = *this;
+	const Iterator tmp = *this;
 	++*this;
 	return tmp;
 }
 
-inline skip_list::iterator& skip_list::iterator::operator--()
+template <class NodePtr>
+skip_list::Iterator<NodePtr>& skip_list::Iterator<NodePtr>::operator--()
 {
 	m_ptr = m_ptr->prev;
 	return *this;
 }
 
-inline skip_list::iterator skip_list::iterator::operator--(int)
+template <class NodePtr>
+skip_list::Iterator<NodePtr> skip_list::Iterator<NodePtr>::operator--(int)
 {
-	const iterator tmp = *this;
+	const Iterator tmp = *this;
 	--*this;
 	return tmp;
 }
@@ -60,7 +69,7 @@ inline void skip_list::create_new_level()
 	++m_height;
 }
 
-inline void skip_list::erase(node* nd)
+inline void skip_list::erase(const node* nd) noexcept
 {
 	delete nd->val;
 	while (nd != &m_list)
@@ -87,17 +96,23 @@ inline skip_list::node* skip_list::search(const_reference target) const noexcept
 	return h_tmp;
 }
 
+inline skip_list::node* skip_list::at(size_type) const noexcept
+{
+	// TODO
+	return m_list.next;
+}
+
 inline skip_list::skip_list()
 	: m_size(0), m_height(1)
 {
 }
 
-inline skip_list::node* skip_list::insert(const_reference target)
+inline skip_list::node* skip_list::insert(pointer target)
 {
-	node* largest_small = search(target);
+	node* largest_small = search(*target);
 	node* smallest_large = largest_small->next;
 
-	auto new_node = new node(new value_type(target));
+	auto new_node = new node(target);
 	smallest_large->push_back(new_node);
 	new_node->below = new_node->above = &m_list;
 
@@ -124,7 +139,7 @@ inline skip_list::node* skip_list::insert(const_reference target)
 	return new_node;
 }
 
-inline skip_list::~skip_list()
+inline skip_list::~skip_list() noexcept
 {
 	clear();
 }
@@ -139,31 +154,82 @@ inline skip_list::size_type skip_list::size() const noexcept
 	return m_size;
 }
 
-inline void skip_list::erase(const_iterator it)
+inline void skip_list::erase(const_iterator it) noexcept
 {
 	erase(it.m_ptr);
 }
 
-inline void skip_list::clear()
+inline void skip_list::clear() noexcept
 {
 	while (!empty())
-		erase(begin());
+		erase(cbegin());
 }
 
 inline void skip_list::push_back(const_reference i)
 {
-	insert(i);
+	insert(new value_type(i));
 }
 
-inline void skip_list::pop(const_reference i)
+inline void skip_list::emplace(value_type&& i)
+{
+	insert(new value_type(std::move(i)));
+}
+
+inline void skip_list::pop(const_reference i) noexcept
 {
 	erase(search(i));
+}
+
+inline skip_list::iterator skip_list::end() noexcept
+{
+	return &m_list;
 }
 
 inline skip_list::iterator skip_list::begin() noexcept
 {
 	return m_list.next;
 }
+
+inline skip_list::reverse_iterator skip_list::rend() noexcept
+{
+	return reverse_iterator(&m_list);
+}
+
+inline skip_list::reverse_iterator skip_list::rbegin() noexcept
+{
+	return reverse_iterator(m_list.prev);
+}
+
+inline skip_list::const_iterator skip_list::end() const noexcept
+{
+	return &m_list;
+}
+
+inline skip_list::const_iterator skip_list::cend() const noexcept
+{
+	return end();
+}
+
+inline skip_list::const_iterator skip_list::begin() const noexcept
+{
+	return m_list.next;
+}
+
+inline skip_list::const_iterator skip_list::cbegin() const noexcept
+{
+	return begin();
+}
+
+inline skip_list::const_reverse_iterator skip_list::crend() const noexcept
+{
+	return const_reverse_iterator(&m_list);
+}
+
+inline skip_list::const_reverse_iterator skip_list::crbegin() const noexcept
+{
+	return const_reverse_iterator(m_list.prev);
+}
+
 
 inline skip_list::const_reference skip_list::back() const noexcept
 {
@@ -178,11 +244,6 @@ inline skip_list::const_reference skip_list::front() const noexcept
 inline skip_list::iterator skip_list::find(const_reference target) const noexcept
 {
 	return search(target);
-}
-
-inline skip_list::iterator skip_list::end() noexcept
-{
-	return &m_list;
 }
 
 inline skip_list::node* skip_list::node::push_back(node* nd)
@@ -202,7 +263,7 @@ inline skip_list::node* skip_list::node::put_top(node* nd)
 	return nd;
 }
 
-inline void skip_list::node::unlink_h()
+inline void skip_list::node::unlink_h() noexcept
 {
 	node* n = next;
 	node* p = prev;
@@ -216,7 +277,7 @@ inline skip_list::node::node(pointer ptr)
 {
 }
 
-inline skip_list::node::~node()
+inline skip_list::node::~node() noexcept
 {
 	unlink_h();
 	val = nullptr;
@@ -227,20 +288,16 @@ inline skip_list::const_reference skip_list::node::get() const
 	return *val;
 }
 
-inline bool skip_list::node::empty() const
+inline bool skip_list::node::empty() const noexcept
 {
 	return val == nullptr;
 }
 
-inline bool operator==(const skip_list::iterator& a, const skip_list::iterator& b)
+inline bool operator==(const skip_list& lhs, const skip_list& rhs) noexcept
 {
-	return a.m_ptr == b.m_ptr;
+	return std::ranges::equal(lhs, rhs);
 }
 
-inline bool operator!=(const skip_list::iterator& a, const skip_list::iterator& b)
-{
-	return a.m_ptr != b.m_ptr;
-}
 
 inline std::ostream& operator<<(std::ostream& os, const skip_list& obj)
 {
