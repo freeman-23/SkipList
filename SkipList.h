@@ -1,9 +1,10 @@
 ﻿#pragma once
 
+template <class T>
 class skip_list
 {
 public:
-	using value_type = int;
+	using value_type = T;
 	using pointer = value_type*;
 	using size_type = std::size_t;
 	using reference = value_type&;
@@ -90,10 +91,9 @@ public:
 	void erase(const_iterator) noexcept;
 	template <std::ranges::input_range Rng>
 	void erase(Rng) noexcept;
-	template<std::predicate<int> Pred>
+	template <std::predicate<int> Pred>
 	void erase_if(Pred pred) noexcept;
-	
-	
+
 	void emplace(value_type&&);
 	void push_back(const_reference);
 
@@ -117,8 +117,17 @@ public:
 	[[nodiscard]] const_reference front() const noexcept;
 	[[nodiscard]] iterator find(const_reference) const noexcept;
 
-	friend std::ostream& operator<<(std::ostream& os, const skip_list& obj);
-	friend bool operator==(const skip_list& lhs, const skip_list& rhs) noexcept;
+	[[nodiscard]] constexpr std::string to_string() const;
+	
+	friend std::ostream& operator<<(std::ostream& os, const skip_list& obj)
+	{
+		return os << obj.to_string();
+	}
+
+	friend bool operator==(const skip_list& lhs, const skip_list& rhs) noexcept
+	{
+		return std::ranges::equal(lhs, rhs);
+	}
 
 private:
 	node m_list;
