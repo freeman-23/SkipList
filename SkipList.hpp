@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SkipList.h"
+#include <unordered_map>
 #include <random>
 #include <format>
 
@@ -125,6 +126,23 @@ typename skip_list<T>::node* skip_list<T>::search(const_reference target) const 
 }
 
 template <class T>
+bool skip_list<T>::flip() noexcept
+{
+	static std::uint32_t data;
+	static size_type bit_count = 0;
+	if (bit_count == 0)
+	{
+		static std::mt19937 rng;
+		data = rng();
+		bit_count = 32;
+	}
+	const bool bit = data & 1;
+	data >>= 1;
+	--bit_count;
+	return bit;
+}
+
+template <class T>
 typename skip_list<T>::node* skip_list<T>::at(size_type) const noexcept
 {
 	// TODO
@@ -156,11 +174,9 @@ typename skip_list<T>::node* skip_list<T>::insert(pointer target)
 	smallest_large->push_back(new_node);
 	new_node->below = new_node->above = &m_list;
 
-	std::mt19937 rng(std::random_device{}());
-	bool flip = std::uniform_int_distribution<>{0, 1}(rng);
 	size_type new_height = 1;
 
-	while (flip)
+	while (flip())
 	{
 		if (++new_height > m_height)
 			create_new_level();
@@ -171,8 +187,6 @@ typename skip_list<T>::node* skip_list<T>::insert(pointer target)
 		const auto new_node_above = new node(new_node->val);
 		largest_small->next->push_back(new_node_above);
 		new_node = new_node->put_top(new_node_above);
-
-		flip = std::uniform_int_distribution<>{0, 1}(rng);
 	}
 
 	++m_size;
@@ -198,6 +212,12 @@ typename skip_list<T>::size_type skip_list<T>::size() const noexcept
 }
 
 template <class T>
+typename skip_list<T>::size_type skip_list<T>::height() const noexcept
+{
+	return m_height;
+}
+
+template <class T>
 void skip_list<T>::erase(const_iterator it) noexcept
 {
 	erase(it.m_ptr);
@@ -213,7 +233,13 @@ void skip_list<T>::clear() noexcept
 template <class T>
 void skip_list<T>::push_back(const_reference i)
 {
-	insert(new value_type(i));
+	insert(i);
+}
+
+template <class T>
+typename skip_list<T>::iterator skip_list<T>::insert(const_reference i)
+{
+	return insert(new value_type(i));
 }
 
 template <class T>
@@ -377,9 +403,9 @@ constexpr std::string skip_list<T>::to_string() const
 {
 	std::string out;
 	auto bottom_left = &m_list;
-	std::unordered_map<const value_type*, size_t> first_row_positions;
+	std::unordered_map<const_pointer, size_t> first_row_positions;
 	bool first = true;
-	auto get = [&](const value_type* it, size_t f)
+	auto get = [&](const_pointer it, size_t f)
 	{
 		if (const auto i = first_row_positions.find(it); !first && i != first_row_positions.end())
 			return f > i->second ? f - i->second : i->second - f;

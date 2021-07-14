@@ -77,6 +77,7 @@ private:
 	node* insert(pointer);
 	[[nodiscard]] node* at(size_type) const noexcept;
 	[[nodiscard]] node* search(const_reference) const noexcept;
+	[[nodiscard]] static bool flip() noexcept;
 
 public:
 	skip_list();
@@ -96,9 +97,11 @@ public:
 
 	void emplace(value_type&&);
 	void push_back(const_reference);
+	iterator insert(const_reference);
 
 	[[nodiscard]] bool empty() const noexcept;
 	[[nodiscard]] size_type size() const noexcept;
+	[[nodiscard]] size_type height() const noexcept;
 
 	[[nodiscard]] iterator end() noexcept;
 	[[nodiscard]] iterator begin() noexcept;
