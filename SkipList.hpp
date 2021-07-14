@@ -18,9 +18,9 @@ skip_list::Iterator<NodePtr>::Iterator(NodePtr ptr) noexcept
 }
 
 template <class NodePtr>
-skip_list::value_type skip_list::Iterator<NodePtr>::operator*() const
+skip_list::reference skip_list::Iterator<NodePtr>::operator*() const
 {
-	return m_ptr->get();
+	return *m_ptr->val;
 }
 
 template <class NodePtr>
@@ -57,6 +57,22 @@ skip_list::Iterator<NodePtr> skip_list::Iterator<NodePtr>::operator--(int)
 	const Iterator tmp = *this;
 	--*this;
 	return tmp;
+}
+
+template <std::ranges::input_range Rng>
+void skip_list::erase(Rng rng) noexcept
+{
+	auto begin = rng.begin();
+	while (begin != rng.end())
+		erase((begin++).m_ptr);
+}
+
+template <std::predicate<int> Pred>
+void skip_list::erase_if(Pred pred) noexcept
+{
+	auto begin = this->begin();
+	while (begin != end())
+		if (pred(*begin++)) erase(begin.m_ptr->prev);
 }
 
 inline void skip_list::create_new_level()
@@ -105,6 +121,14 @@ inline skip_list::node* skip_list::at(size_type) const noexcept
 inline skip_list::skip_list()
 	: m_size(0), m_height(1)
 {
+}
+
+inline skip_list::skip_list(const skip_list& other)
+	: m_size(0), m_height(0)
+{
+	auto begin = other.begin();
+	while (begin != other.end())
+		push_back(*begin++);
 }
 
 inline skip_list::node* skip_list::insert(pointer target)
@@ -202,27 +226,37 @@ inline skip_list::reverse_iterator skip_list::rbegin() noexcept
 
 inline skip_list::const_iterator skip_list::end() const noexcept
 {
-	return &m_list;
+	return cend();
 }
 
 inline skip_list::const_iterator skip_list::cend() const noexcept
 {
-	return end();
+	return &m_list;
 }
 
 inline skip_list::const_iterator skip_list::begin() const noexcept
 {
-	return m_list.next;
+	return cbegin();
 }
 
 inline skip_list::const_iterator skip_list::cbegin() const noexcept
 {
-	return begin();
+	return m_list.next;
+}
+
+inline skip_list::const_reverse_iterator skip_list::rend() const noexcept
+{
+	return crend();
 }
 
 inline skip_list::const_reverse_iterator skip_list::crend() const noexcept
 {
 	return const_reverse_iterator(&m_list);
+}
+
+inline skip_list::const_reverse_iterator skip_list::rbegin() const noexcept
+{
+	return crbegin();
 }
 
 inline skip_list::const_reverse_iterator skip_list::crbegin() const noexcept

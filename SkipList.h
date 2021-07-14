@@ -3,7 +3,6 @@
 class skip_list
 {
 public:
-	struct node;
 	using value_type = int;
 	using pointer = value_type*;
 	using size_type = std::size_t;
@@ -25,7 +24,7 @@ public:
 		Iterator() noexcept;
 		Iterator(NodePtr ptr) noexcept;
 
-		value_type operator*() const;
+		reference operator*() const;
 		pointer operator->() const;
 
 		Iterator& operator++();
@@ -41,11 +40,6 @@ public:
 		NodePtr m_ptr;
 	};
 
-	using iterator = Iterator<node*>;
-	using const_iterator = Iterator<const node*>;
-	using reverse_iterator = std::reverse_iterator<iterator>;
-	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-	
 private:
 	struct node
 	{
@@ -70,6 +64,13 @@ private:
 		void unlink_h() noexcept;
 	};
 
+public:
+	using iterator = Iterator<node*>;
+	using const_iterator = Iterator<const node*>;
+	using reverse_iterator = std::reverse_iterator<iterator>;
+	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+private:
 	void create_new_level();
 	void erase(const node*) noexcept;
 	node* insert(pointer);
@@ -78,7 +79,7 @@ private:
 
 public:
 	skip_list();
-	skip_list(const skip_list& other) = delete;
+	skip_list(const skip_list& other);
 	skip_list(skip_list&& other) = delete;
 	skip_list& operator=(const skip_list& other) = delete;
 	skip_list& operator=(skip_list&& other) = delete;
@@ -87,6 +88,11 @@ public:
 	void clear() noexcept;
 	void pop(const_reference) noexcept;
 	void erase(const_iterator) noexcept;
+	template <std::ranges::input_range Rng>
+	void erase(Rng) noexcept;
+	template<std::predicate<int> Pred>
+	void erase_if(Pred pred) noexcept;
+	
 	
 	void emplace(value_type&&);
 	void push_back(const_reference);
@@ -102,7 +108,9 @@ public:
 	[[nodiscard]] const_iterator cend() const noexcept;
 	[[nodiscard]] const_iterator begin() const noexcept;
 	[[nodiscard]] const_iterator cbegin() const noexcept;
+	[[nodiscard]] const_reverse_iterator rend() const noexcept;
 	[[nodiscard]] const_reverse_iterator crend() const noexcept;
+	[[nodiscard]] const_reverse_iterator rbegin() const noexcept;
 	[[nodiscard]] const_reverse_iterator crbegin() const noexcept;
 
 	[[nodiscard]] const_reference back() const noexcept;
@@ -117,6 +125,5 @@ private:
 	size_type m_size;
 	size_type m_height;
 };
-
 
 #include "SkipList.hpp"

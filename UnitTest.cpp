@@ -114,6 +114,14 @@ namespace functional_tests
 		ASSERT_EQ(sl.back(), 7);
 	}
 
+	TEST(Basic, CanCopyConstructWithOneElement)
+	{
+		skip_list sl1;
+		sl1.push_back(5);
+		skip_list sl2{sl1};
+		ASSERT_EQ(sl1, sl2);
+	}
+
 	TEST(Insertion, CanInsertSorted10)
 	{
 		skip_list sl;
@@ -191,80 +199,42 @@ namespace functional_tests
 	TEST(Deletion, CanInsertSorted10AndDeleteEvens)
 	{
 		skip_list sl;
-		std::array initial = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+		std::vector initial = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 		std::ranges::copy(initial, std::back_inserter(sl));
 
-		for (const auto& i : initial)
-			if (i % 2 == 0) sl.pop(i);
+		sl.erase_if([](auto i) { return i % 2 == 0; });
+		std::erase_if(initial, [](auto i) { return i % 2 == 0; });
 
-		std::cout << std::endl << sl << std::endl;
 		ASSERT_EQ(sl.size(), 5);
-		ASSERT_TRUE(std::ranges::equal(
-			initial | std::views::filter([](const auto& i) { return i % 2 != 0; }),
-			sl));
+		ASSERT_TRUE(std::ranges::equal(initial, sl));
+	}
+
+	TEST(Deletion, CanInsert10AndClear)
+	{
+		skip_list sl;
+		std::vector initial = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+		std::ranges::copy(initial, std::back_inserter(sl));
+
+		sl.clear();
+
+		ASSERT_EQ(sl.size(), 0);
+		ASSERT_EQ(sl.begin(), sl.end());
 	}
 
 	TEST(Deletion, CanInsertSorted10AndDeleteDuplicates)
 	{
 		skip_list sl;
-		std::array initial = {1, 2, 2, 4, 5, 5, 5, 8, 9, 9};
+		std::vector initial = {1, 2, 2, 4, 4, 6, 7, 9, 9, 9};
 
 		std::ranges::copy(initial, std::back_inserter(sl));
-		auto p = std::ranges::remove_if(sl, [](int i) { return i % 2 == 0; });
 
-		ASSERT_EQ(sl.size(), 5);
+		sl.erase(std::ranges::unique(sl));
+		auto p = std::ranges::unique(initial);
+		initial.erase(p.begin(), p.end());
+
+		ASSERT_EQ(sl.size(), 6);
 		ASSERT_TRUE(std::ranges::equal(initial, sl));
 	}
-
-	/******
-	TEST(Insertion, CanInsertReversed10)
-	{
-		skip_list sl;
-		auto initial = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-
-		std::ranges::copy(initial | std::views::reverse, std::back_inserter(sl));
-
-		std::cout << std::endl << sl << std::endl;
-		ASSERT_EQ(sl.size(), 10);
-		ASSERT_TRUE(std::ranges::equal(initial, sl));
-	}
-
-	TEST(Insertion, CanInsertShuffle10)
-	{
-		skip_list sl;
-		std::array initial = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-		std::random_device rd;
-		std::mt19937 gen{rd()};
-
-		std::ranges::shuffle(initial, gen);
-		std::ranges::copy(initial, std::back_inserter(sl));
-
-		std::cout << std::endl << sl << std::endl;
-		std::ranges::sort(initial);
-		ASSERT_EQ(sl.size(), 10);
-		ASSERT_TRUE(std::ranges::equal(initial, sl));
-	}
-
-	auto random_integer_generator()
-	{
-		static std::uniform_int_distribution distribution{-100, 100};
-		static std::random_device device;
-		static std::mt19937 engine{device()};
-		return distribution(engine);
-	}
-
-	TEST(Insertion, CanInsertRandom10)
-	{
-		skip_list sl;
-
-		std::array<int, 10> initial{};
-		std::ranges::generate(initial, random_integer_generator);
-		std::ranges::copy(initial, std::back_inserter(sl));
-
-		std::cout << std::endl << sl << std::endl;
-		std::ranges::sort(initial);
-		ASSERT_EQ(sl.size(), 10);
-		ASSERT_TRUE(std::ranges::equal(initial, sl));
-	}***/
 }
